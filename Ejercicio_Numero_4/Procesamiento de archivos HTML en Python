@@ -1,0 +1,202 @@
+import os
+import base64
+import mimetypes
+from html.parser import HTMLParser
+from typing import List, Dict, Any, Set, Tuple
+import json # Importado para el informe final
+
+
+# PEP 8: Nombres de clases en CamelCase.
+#Se usa(SOLID): Esta clase solo parsea HTML para encontrar imgs.
+
+
+class AnalizadorHtmlImagenes(HTMLParser):
+    """
+    Un analizador de HTML simple para extraer las rutas de las etiquetas <img>.
+
+    Hereda de `html.parser.HTMLParser` y sobrescribe el método `handle_starttag`
+    para identificar las etiquetas 'img' y extraer el valor de su atributo 'src'.
+    """
+    def __init__(self):
+        super().__init__()
+        self.rutas_imagenes: Set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]) -> None:
+        """Se llama por cada etiqueta de apertura encontrada en el HTML."""
+        if tag == 'img':
+            atributos_dict = dict(attrs)
+            ruta_src = atributos_dict.get('src')
+            if ruta_src and not ruta_src.startswith('data:'):
+                self.rutas_imagenes.add(ruta_src)
+
+    def obtener_rutas(self) -> Set[str]:
+        """Devuelve el conjunto de rutas de imágenes encontradas."""
+        return self.rutas_imagenes
+
+class ProcesadorHtml:
+    """
+    Orquesta el proceso de encontrar archivos HTML, convertir sus imágenes a Base64
+    y guardar los resultados en nuevos archivos.
+    """
+    def __init__(self, rutas_entrada: List[str]):
+        """
+        Inicializa el procesador con las rutas de entrada.
+
+        Args:
+            rutas_entrada: Una lista de strings, donde cada string es una ruta
+                           a un archivo HTML o a un directorio.
+        """
+        self.rutas_entrada: List[str] = rutas_entrada
+        self.archivos_html: List[str] = self._buscar_archivos_html()
+        self.informe_proceso: Dict[str, Dict[str, str]] = {
+            "success": {},
+            "fail": {}
+        }
+
+    def _buscar_archivos_html(self) -> List[str]:
+        """
+        Analiza las rutas de entrada y devuelve una lista de todos los archivos HTML.
+        """
+        rutas_encontradas = []
+        for ruta in self.rutas_entrada:
+            ruta_abs = os.path.abspath(ruta)
+            if os.path.isfile(ruta_abs) and ruta_abs.lower().endswith(('.html', '.htm')):
+                rutas_encontradas.append(ruta_abs)
+            elif os.path.isdir(ruta_abs):
+                for dirpath, _, filenames in os.walk(ruta_abs):
+                    for filename in filenames:
+                        if filename.lower().endswith(('.html', '.htm')):
+                            ruta_completa = os.path.join(dirpath, filename)
+                            rutas_encontradas.append(ruta_completa)
+        return rutas_encontradas
+
+    def _codificar_imagen_a_base64(self, ruta_imagen_completa: str) -> str | None:
+        """
+        Lee un archivo de imagen y lo codifica a un string de datos URI en Base64.
+        """
+        try:
+            tipo_mime, _ = mimetypes.guess_type(ruta_imagen_completa)
+            if not tipo_mime or not tipo_mime.startswith('image'):
+                raise ValueError(f"Tipo de archivo no reconocido como imagen: {tipo_mime}")
+
+            with open(ruta_imagen_completa, 'rb') as f_img:
+                contenido_binario = f_img.read()
+            
+            string_base64 = base64.b64encode(contenido_binario).decode('ascii')
+            
+            return f"data:{tipo_mime};base64,{string_base64}"
+
+        except (FileNotFoundError, IOError, ValueError) as e:
+            self.informe_proceso['fail'][ruta_imagen_completa] = str(e)
+            return None
+
+    def procesar_archivos(self) -> Dict[str, Dict[str, str]]:
+        """
+        Función principal que procesa todos los archivos HTML encontrados.
+        """
+        print(f"Archivos HTML encontrados para procesar: {len(self.archivos_html)}")
+        if not self.archivos_html:
+            print("No se encontraron archivos HTML. Terminando proceso.")
+            return self.informe_proceso
+
+        for ruta_html in self.archivos_html:
+            print(f"\n--- Procesando archivo: {ruta_html} ---")
+            try:
+                # Se lee explícitamente como UTF-8
+                with open(ruta_html, 'r', encoding='utf-8') as f:
+                    contenido_html = f.read()
+
+                parser = AnalizadorHtmlImagenes()
+                parser.feed(contenido_html)
+                rutas_imagenes = parser.obtener_rutas()
+
+                if not rutas_imagenes:
+                    print("No se encontraron imágenes en este archivo.")
+                    continue
+                
+                print(f"Imágenes encontradas: {rutas_imagenes}")
+                contenido_modificado = contenido_html
+                directorio_base_html = os.path.dirname(ruta_html)
+                
+                for ruta_relativa_img in rutas_imagenes:
+                    ruta_completa_img = os.path.normpath(os.path.join(directorio_base_html, ruta_relativa_img))
+                    
+                    data_uri_base64 = self._codificar_imagen_a_base64(ruta_completa_img)
+
+                    if data_uri_base64:
+                        contenido_modificado = contenido_modificado.replace(
+                            f'src="{ruta_relativa_img}"', 
+                            f'src="{data_uri_base64}"'
+                        )
+                        self.informe_proceso['success'][ruta_completa_img] = "Procesada exitosamente"
+                        print(f"  [ÉXITO] Imagen procesada: {ruta_completa_img}")
+                    else:
+                        print(f"  [FALLO] No se pudo procesar la imagen: {ruta_completa_img}")
+
+                nombre_base, extension = os.path.splitext(ruta_html)
+                ruta_salida = f"{nombre_base}.procesado{extension}"
+                # Se escribe el nuevo archivo también como UTF-8
+                with open(ruta_salida, 'w', encoding='utf-8') as f:
+                    f.write(contenido_modificado)
+                print(f"Archivo de salida generado: {ruta_salida}")
+
+            except Exception as e:
+                print(f"  [ERROR] Ocurrió un error inesperado al procesar {ruta_html}: {e}")
+                
+        return self.informe_proceso
+
+# --- Ejecución de Ejemplo---
+if __name__ == "__main__":
+    print("--- INICIANDO DEMOSTRACIÓN ---")
+    
+    os.makedirs("demo/sub_dir", exist_ok=True)
+    os.makedirs("demo/img", exist_ok=True)
+
+    png_pixel_rojo_b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg=='
+    with open("demo/img/logo.png", "wb") as f:
+        f.write(base64.b64decode(png_pixel_rojo_b64))
+
+    # El contenido ahora incluye caracteres especiales
+    html_1 = """
+    <!DOCTYPE html>
+    <html>
+    <head><title>Página 1</title></head>
+    <body>
+        <h1>Página de prueba número 1</h1>
+        <p>Esta es una imagen válida de la compañía:</p>
+        <img src="img/logo.png" alt="Logo de la empresa">
+    </body>
+    </html>
+    """
+    # **LA CORRECCIÓN CLAVE ESTÁ AQUÍ**
+    with open("demo/pagina1.html", "w", encoding='utf-8') as f:
+        f.write(html_1)
+
+    html_2 = """
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <h2>Página de prueba 2 en subdirectorio</h2>
+        <p>Esta imagen no existe y causará un fallo:</p>
+        <img src="img/inexistente.jpg">
+        <p>Esta es otra imagen válida:</p>
+        <img src="../img/logo.png">
+    </body>
+    </html>
+    """
+    # **Y AQUÍ TAMBIÉN**
+    with open("demo/sub_dir/pagina2.html", "w", encoding='utf-8') as f:
+        f.write(html_2)
+
+    rutas_a_procesar = ["demo"] 
+    
+    procesador = ProcesadorHtml(rutas_a_procesar)
+    reporte_final = procesador.procesar_archivos()
+
+    print("\n\n--- INFORME FINAL DEL PROCESO ---")
+    print(json.dumps(reporte_final, indent=4, ensure_ascii=False))
+    
+    print("\n--- DEMOSTRACIÓN FINALIZADA ---")
+    # Para limpiar después de la prueba:
+    # import shutil
+    # shutil.rmtree("demo")
