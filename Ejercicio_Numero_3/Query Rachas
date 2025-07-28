@@ -1,0 +1,68 @@
+-- Parámetros configurables
+WITH params AS (
+    SELECT
+        '2024-12-31'::date AS fecha_base, -- Asegúrate de que el tipo de dato sea correcto para tu DB (e.g., DATE, DATETIME)
+        3 AS n_minimo                     -- Mínimo de meses consecutivos requeridos
+),
+-- 1. Clasificar saldos por nivel y calcular la diferencia de fila para identificar grupos de rachas
+-- Esta CTE combina la clasificación y la lógica para detectar el inicio de una nueva racha
+clasificacion_con_grupo AS (
+    SELECT
+        h.identificacion,
+        h.corte_mes,
+        h.saldo,
+        CASE
+            WHEN h.saldo < 300000 THEN 'N0'
+            WHEN h.saldo < 1000000 THEN 'N1'
+            WHEN h.saldo < 3000000 THEN 'N2'
+            WHEN h.saldo < 5000000 THEN 'N3'
+            ELSE 'N4'
+        END AS nivel,
+        -- Calcula la diferencia en meses desde un punto de referencia para cada registro
+        -- Si esta diferencia es constante dentro de un grupo de "nivel", significa que es una racha.
+        (DATE_PART('year', h.corte_mes) * 12 + DATE_PART('month', h.corte_mes)) -
+        ROW_NUMBER() OVER (PARTITION BY h.identificacion,
+            CASE
+                WHEN h.saldo < 300000 THEN 'N0'
+                WHEN h.saldo < 1000000 THEN 'N1'
+                WHEN h.saldo < 3000000 THEN 'N2'
+                WHEN h.saldo < 5000000 THEN 'N3'
+                ELSE 'N4'
+            END
+            ORDER BY h.corte_mes) AS racha_grupo
+    FROM
+        historia h, params
+    WHERE
+        h.corte_mes <= params.fecha_base
+),
+-- 2. Calcular la duración de cada racha y filtrar las que cumplen con el mínimo
+rachas_calculadas AS (
+    SELECT
+        identificacion,
+        nivel,
+        MIN(corte_mes) AS fecha_inicio,
+        MAX(corte_mes) AS fecha_fin,
+        COUNT(*) AS duracion,
+        -- Asigna un ranking para seleccionar la mejor racha por cliente
+        ROW_NUMBER() OVER (
+            PARTITION BY identificacion
+            ORDER BY COUNT(*) DESC, MAX(corte_mes) DESC
+        ) AS ranking_racha
+    FROM
+        clasificacion_con_grupo
+    GROUP BY
+        identificacion, nivel, racha_grupo
+    HAVING COUNT(*) >= (SELECT n_minimo FROM params)
+)
+-- 3. Resultado final: seleccionar la mejor racha por cliente
+SELECT
+    identificacion,
+    duracion AS racha,
+    fecha_fin,
+    nivel
+FROM
+    rachas_calculadas
+WHERE
+    ranking_racha = 1
+ORDER BY
+    racha DESC, fecha_fin DESC;
