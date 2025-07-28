@@ -1,169 +1,71 @@
-Sustencion de cada ejercicio
-1.Ejercicio Conceptual de Creación de Dataset de Números de Teléfono de Clientes
-Este proyecto es como una fábrica de datos ficticios pero realistas, creada en Python. Su objetivo es generar información "fake" (como nombres, direcciones, teléfonos, etc.) que parezca real, pero sin usar datos de personas verdaderas. Esto es útil para hacer pruebas de software, machine learning o análisis sin riesgo de privacidad.
-Luego de generar los datos, el proyecto los valida para asegurarse de que no haya errores, como números de teléfono inválidos o campos vacíos. Todo esto se hace de forma automática, como una cadena de producción bien organizada.
-¿Cómo está estructurado?
-Imagina que el proyecto es una cocina con diferentes zonas:
-generar_dataset.py:
-Es el "chef" que prepara los datos. Usa librerías como Faker (que inventa datos convincentes, como direcciones o emails) y pandas (para organizarlos en tablas, como Excel pero más potente).
-validar_dataset.py
-Es el "control de calidad". Revisa que todo esté correcto:
-¿Los teléfonos tienen el formato correcto? (con phonenumbers).
-¿Faltan datos? ¿Hay incoherencias?
-Limpieza_datos:
-Si los datos generados tienen "suciedad" (errores), aquí se procesan para arreglarlos.
-requirements.txt
-Es la "lista de ingredientes". Le dice a Python qué librerías instalar para que todo funcione (pandas, Faker, etc.).
-.github/workflows/pipeline.yml
-Es el "robot de la cocina". Automatiza tareas repetitivas, como:
-Hacer pruebas cada vez que se sube código.
-Verificar que no haya errores antes de publicar cambios.
-2.KPI
-Este ejercicio conceptual explora la implementación de un Framework de Calidad de Datos, centrado en un "Data Quality Scorecard" o tablero interactivo. El objetivo es monitorear KPIs (Key Performance Indicators) esenciales para evaluar la salud de los datos, demostrando la importancia de la calidad de los datos en el ciclo de vida de la información.
-Se propone un tablero interactivo (conceptual) que visualice los siguientes KPIs clave de calidad de datos:
-*Integridad: Porcentaje de registros completos frente a registros con valores nulos, indicando la completitud de la información.
-*Exactitud: Porcentaje de números de teléfono válidos, verificados mediante expresiones regulares (regex), asegurando que los datos cumplen con un formato esperado.
-*Unicidad: Porcentaje de registros duplicados identificados, crucial para evitar redundancias y garantizar la singularidad de las entradas.
-*Consistencia: Porcentaje de códigos de país que coinciden con los prefijos telefónicos asociados, verificando la coherencia entre diferentes campos de datos.
-*Actualidad: Fecha de la última actualización de los datos, un indicador vital para conocer la frescura y relevancia de la información.
-Se ha desarrollado una función en Python para calcular algunas de estas métricas clave, utilizando la librería pandas
-completeness: Calcula el porcentaje promedio de valores no nulos en todo el DataFrame. 
-uniqueness: Determina el porcentaje de filas únicas en el DataFrame. 
-valid_phones: Mide el porcentaje de números de teléfono que cumplen con un patrón de expresión regular que valida el formato (+ opcional seguido de al menos 7 dígitos).
-Para el KPI de Consistencia (códigos de país que coinciden con prefijos telefónicos), se propone un script SQL que calcula el porcentaje de números de teléfono válidos por código de país
-Este script agrupa los clientes por Codigo_pais y calcula el porcentaje de Numero_Telefono que son considerados válidos (contienen solo dígitos y/o +, y tienen al menos 7 dígitos después de eliminar el +) dentro de cada grupo. 
-y en el diagrama de flujo ilustra el flujo conceptual de datos dentro de un sistema que integra la calidad de datos:
-Data Sources: Origen de los datos (CSV, APIs, Bases de Datos). 
-Data Quality Engine: Componente donde se aplican las reglas y se calculan los KPIs de calidad. 
-Data Catalog (Metadata): Almacena los metadatos de los datos y los resultados de calidad. 
-Business Intelligence Tools: Herramientas para visualizar los datos de calidad y generar insights de negocio. 
-3.Rachas
-# Carga de Historial de Saldos desde Excel a SQLite
+mi nombre es Santiago Rodriguez y estoy emocionado de compartir este proyecto demuestran mi pasión y habilidades en el manejo de datos, el desarrollo de herramientas y la optimización de procesos. Cada uno de estos ejercicios representa un desafío que abordé con curiosidad y dedicación, buscando siempre soluciones eficientes y robustas.
+Estos proyectos no solo muestran mis capacidades técnicas en Python, SQL y manipulación de datos, sino también mi enfoque en la calidad, la eficiencia y la resolución de problemas reales.
 
-Este script permite cargar un archivo de Excel con información histórica de saldos por cliente en una base de datos local SQLite. Es útil para transformar archivos planos en datos estructurados y consultables desde SQL.
+1. Ejercicio Conceptual: Creación y Validación de un Dataset de Números de Teléfono de Clientes
+Imagina que necesitamos datos para probar un nuevo software o un modelo de aprendizaje automático, pero no podemos usar información real para proteger la privacidad. Este proyecto es mi solución para ese dilema: una fábrica de datos ficticios, pero sorprendentemente realistas, construida en Python.
+¿Qué hace?
+Genera datos "fake": Crea información como nombres, direcciones y números de teléfono que parecen auténticos, sin usar datos de personas reales. Es perfecto para entornos de prueba, desarrollo o análisis sin riesgos de privacidad.
+Valida la información: Después de generar los datos, el proyecto los revisa automáticamente para asegurarse de que no haya errores, como números de teléfono inválidos o campos vacíos. Es como un control de calidad automático que garantiza la fiabilidad de los datos.
+¿Cómo está organizado?
+Piensa en este proyecto como una cocina bien organizada con diferentes secciones:
+generar_dataset.py: Este es el "chef" principal. Utiliza librerías como Faker para inventar datos convincentes y pandas para organizarlos de manera estructurada, como si fuera una hoja de cálculo muy potente.
+validar_dataset.py: Es nuestro "control de calidad". Se encarga de revisar que todo esté en orden: ¿Los teléfonos tienen el formato correcto? ¿Faltan datos? ¿Hay alguna inconsistencia?
+Limpieza_datos: Si los datos generados tienen algún "desorden" o error, aquí se procesan para corregirlos y dejarlos impecables.
+requirements.txt: Esta es nuestra "lista de ingredientes". Indica qué librerías de Python necesitas instalar para que el proyecto funcione perfectamente (por ejemplo, pandas, Faker).
+.github/workflows/pipeline.yml: Este es el "robot de la cocina". Automatiza tareas repetitivas, como ejecutar pruebas cada vez que se actualiza el código o verificar que no haya errores antes de publicar cambios.
 
----
+2. KPI: Framework de Calidad de Datos
+Desarrollé un tablero conceptual para medir la calidad de datos mediante indicadores clave (KPIs):
+Integridad: % de registros completos vs. nulos.
+Exactitud: % de teléfonos válidos (validados con regex).
+Unicidad: % de registros duplicados.
+Consistencia: Coherencia entre códigos de país y prefijos telefónicos.
+Actualidad: Fecha de última actualización.
+Implementación:
+Python: Funciones con pandas para calcular completitud, unicidad y validación de formatos.
+SQL: Consulta que agrupa teléfonos por código de país y verifica su validez.
+Flujo de datos:
+Fuentes (CSV, APIs).
+Motor de calidad (aplica reglas y KPIs).
+Catálogo de metadatos (almacena resultados).
+Visualización en herramientas de BI.
 
-## 📁 Archivos requeridos
+3. Análisis de Rachas de Saldos
+Este módulo carga información histórica de saldos mensuales desde un archivo Excel hacia una base de datos SQLite. Luego permite identificar comportamientos financieros consistentes de los clientes a lo largo del tiempo.
+Carga de datos
+El script revisa que el archivo Excel exista y tenga los datos esperados.
+Crea la tabla historial_saldos en SQLite (si no existe).
+Inserta los datos convertidos al formato adecuado.
+Análisis de Rachas
+Se clasifican los saldos mensuales en niveles (por ejemplo, bajo, medio, alto).
+Se identifican rachas consecutivas de meses en las que un cliente se mantiene en un mismo nivel.
+Se filtran rachas de al menos cierto número de meses (parámetro configurable).
+Se selecciona la mejor racha por cliente: la más larga y reciente.
+Aplicaciones del análisis
+Permite detectar clientes VIP o estables.
+Se puede usar para campañas de marketing o análisis financiero.
+Útil para ver tendencias en el comportamiento del cliente a lo largo del tiempo.
 
-- `rachas.xlsx`: Archivo de Excel con la hoja `historia`, que contiene los datos.
-- El script de Python (`.py`) que hace la carga.
-- Opcional: `rachas.db` se crea automáticamente si no existe.
-
----
-
-## 📌 Estructura esperada del Excel
-
-La hoja de Excel `historia` debe contener al menos estas columnas:
-
-| identificacion | corte_mes  | saldo   |
-|----------------|------------|---------|
-| 123456789      | 2024-01-01 | 150000  |
-| 987654321      | 2024-02-01 | 200000  |
-
-- `identificacion`: ID del cliente.
-- `corte_mes`: Fecha del saldo (una por mes).
-- `saldo`: Valor en pesos.
-
----
-
-## 🚀 ¿Qué hace el script?
-
-1. Verifica que el archivo Excel exista.
-2. Crea (si no existe) una base de datos SQLite en la ruta indicada.
-3. Crea una tabla `historial_saldos` con tres campos:
-   - `identificacion` (texto)
-   - `corte_mes` (fecha)
-   - `saldo` (número decimal)
-4. Lee los datos desde la hoja `historia` del archivo Excel.
-5. Convierte la columna `corte_mes` a formato fecha.
-6. Inserta los datos en la base de datos.
-7. Informa cuántos registros fueron insertados.
-
----
-
-## 🧠 Código explicativo
-
-```python
-import sqlite3
-import pandas as pd
-from pathlib import Path
-
-# 1. Rutas de los archivos
-excel_path = r"C:\Users\natac\OneDrive\Escritorio\rachas.xlsx"
-db_path = r"C:\Users\natac\OneDrive\Escritorio\rachas.db"
-
-# 2. Verificar que el Excel exista
-if not Path(excel_path).exists():
-    raise FileNotFoundError(f"No se encontró el archivo Excel en: {excel_path}")
-
-# 3. Conectarse (o crear) la base de datos SQLite
-conn = sqlite3.connect(db_path)
-
-# 4. Crear tabla si no existe
-create_table_query = """
-CREATE TABLE IF NOT EXISTS historial_saldos (
-    identificacion TEXT,
-    corte_mes TEXT,
-    saldo REAL,
-    PRIMARY KEY (identificacion, corte_mes)
-)
-"""
-try:
-    conn.execute(create_table_query)
-    conn.commit()
-    print("Tabla creada exitosamente")
-except sqlite3.Error as e:
-    print(f"Error al crear la tabla: {str(e)}")
-
-# 5. Leer Excel y cargar a la base de datos
-try:
-    # Leer hoja 'historia'
-    df = pd.read_excel(excel_path, sheet_name='historia')
-
-    # Convertir corte_mes a fecha
-    df['corte_mes'] = pd.to_datetime(df['corte_mes'])
-
-    # Insertar en la base de datos
-    df.to_sql('historial_saldos', conn, if_exists='append', index=False, 
-              dtype={'corte_mes': 'DATETIME'})
-
-    print(f"Datos cargados exitosamente a la base de datos: {db_path}")
-    print(f"Total de registros insertados: {len(df)}")
-
-except Exception as e:
-    print(f"Error al procesar el archivo Excel: {str(e)}")
-
-finally:
-    # Cerrar conexión
-    conn.close()
-3.1 consultas
-Análisis de Clientes por Historial de Saldos y Rachas
-Este proyecto contiene una consulta SQL diseñada para identificar y clasificar a los clientes basándose en sus "rachas" (períodos consecutivos) de saldos. En términos simples, nos ayuda a descubrir qué clientes han mantenido un nivel de saldo particular durante un tiempo específico.
-¿Qué Buscamos con Esta Consulta?
-Imagina que quieres saber:
-¿Qué clientes han sido consistentemente "VIP" (con saldos altos) por varios meses seguidos?
-¿Cuáles han estado en un rango de saldo "intermedio" durante un período prolongado?
-Esta consulta está hecha precisamente para responder a esas preguntas. Su objetivo principal es:
-Clasificar los saldos de cada cliente en diferentes categorías o "niveles" (por ejemplo, Nivel 0 para saldos bajos, Nivel 4 para saldos muy altos).
-Identificar cuántos meses seguidos un cliente ha permanecido en el mismo nivel de saldo.
-Filtrar estas secuencias para encontrar solo las rachas que duran un mínimo de meses que nosotros definimos.
-Para cada cliente, elegir la "mejor" racha que cumpla nuestros criterios (generalmente, la más larga y la más reciente).
-¿Cómo nos Ayuda Esto?
-Entender las rachas de saldos de los clientes es muy útil para:
-Marketing: Puedes identificar a tus clientes más valiosos y ofrecerles beneficios exclusivos.
-Gestión de Relaciones: Permite detectar cambios en el comportamiento financiero de los clientes, quizás para ofrecerles soporte o nuevos productos.
-Análisis Financiero: Ayuda a ver tendencias en los saldos de los clientes a lo largo del tiempo.
-¿Qué Necesitas para Usar Esta Consulta?
-La consulta está escrita en SQL, y está optimizada para bases de datos como SQLite (a partir de la versión 3.25.0 que soporta funciones de ventana).
-Parámetros Configurables:
-Antes de ejecutarla, puedes ajustar dos cosas fácilmente al inicio de la consulta:
-fecha_base: La fecha hasta la cual quieres que la consulta revise el historial de saldos. Por ejemplo, '2024-12-31'.
-n_minimo: El número mínimo de meses consecutivos que debe durar una racha para que la consideremos interesante. Por ejemplo, si pones 3, solo veremos rachas de 3 meses o más.
-Resultado Final:
-La consulta te devolverá una lista donde para cada cliente (identificacion), verás:
-racha: La duración de su racha más relevante (en meses).
-fecha_fin: La fecha en que terminó esa racha.
-nivel: El nivel de saldo que mantuvieron durante esa racha.
-
-
+4. Procesamiento de HTML con Imágenes Embebidas en Base64
+Este script en Python es una herramienta inteligente para manejar imágenes dentro de archivos HTML. Su función principal es encontrar imágenes referenciadas en etiquetas <img>, convertirlas a un formato especial llamado Base64, y luego incrustar directamente esos datos en el código HTML. Al final, genera un nuevo archivo HTML con las imágenes ya "dentro" de él.
+¿Para qué sirve?
+Este procesador es increíblemente útil cuando:
+Necesitas compartir HTMLs sin dependencias externas: Si envías un HTML por correo o lo usas en una aplicación sin conexión a internet, este script asegura que las imágenes se vean correctamente, ya que no dependen de que los archivos de imagen estén en una ruta específica.
+Quieres garantizar la visualización: Elimina el problema de "imágenes rotas" que ocurre cuando los archivos de imagen no se encuentran.
+Optimización para ciertos usos: Facilita el almacenamiento o la distribución de documentos HTML autocontenidos.
+¿Cómo funciona?
+Analiza directorios o archivos: Busca archivos HTML (.html o .htm) en las rutas que le indiques.
+Busca imágenes: Dentro del código HTML, identifica las etiquetas <img> que referencian a un archivo de imagen (ignorando las que ya están embebidas).
+Lee y convierte: Intenta leer esos archivos de imagen desde el disco y los transforma a formato Base64.
+Reemplaza las rutas: Modifica la ruta src="..." de la imagen por su versión Base64 (por ejemplo, src="data:image/png;base64,...").
+Guarda nuevos archivos: Genera una copia del archivo HTML original con un sufijo .procesado para indicar que ya contiene las imágenes incrustadas.
+Estructura del proyecto
+El código está organizado en clases y funciones para mantener un diseño limpio y reutilizable:
+AnalizadorHtmlImagenes: Esta clase se encarga de analizar el contenido HTML y extraer las rutas de las imágenes. Es lo suficientemente inteligente como para ignorar las imágenes que ya están embebidas. Utiliza las capacidades estándar de análisis de HTML de Python.
+ProcesadorHtml: Recibe una lista de rutas (ya sean archivos individuales o carpetas). Recorre estas rutas, busca los HTML, extrae las imágenes, las convierte, las incrusta y genera las nuevas copias de los archivos. Al final, produce un informe detallado con los resultados del procesamiento (éxitos o fallos).
+Ejemplo de ejecución
+El código incluye un bloque de ejemplo (if __name__ == "__main__") que te permite ver el procesador en acción:
+Crea un entorno de prueba con algunos archivos HTML y una imagen.
+Genera un archivo .png a partir de una codificación Base64.
+Crea dos archivos HTML: uno que referencia una imagen válida y otro que referencia una imagen que no existe.
+Ejecuta el proceso de conversión y muestra los resultados directamente en la consola.
