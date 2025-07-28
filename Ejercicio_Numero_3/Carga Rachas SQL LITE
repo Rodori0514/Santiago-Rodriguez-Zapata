@@ -1,0 +1,49 @@
+import sqlite3
+import pandas as pd
+from pathlib import Path
+
+# 1. Definir rutas
+excel_path = r"C:\Users\natac\OneDrive\Escritorio\rachas.xlsx"
+db_path = r"C:\Users\natac\OneDrive\Escritorio\rachas.db"
+
+# Verificar si el archivo Excel existe
+if not Path(excel_path).exists():
+    raise FileNotFoundError(f"No se encontró el archivo Excel en: {excel_path}")
+
+# 2. Crear conexión a la base de datos SQLite
+conn = sqlite3.connect(db_path)
+
+# 3. Crear tabla en la base de datos 
+create_table_query = """
+CREATE TABLE IF NOT EXISTS historial_saldos (
+    identificacion TEXT,
+    corte_mes TEXT,
+    saldo REAL,
+    PRIMARY KEY (identificacion, corte_mes)
+"""
+try:
+    conn.execute(create_table_query)
+    conn.commit()  # Importante hacer commit después de crear la tabla
+    print("Tabla creada exitosamente")
+except sqlite3.Error as e:
+    print(f"Error al crear la tabla: {str(e)}")
+
+# 4. Leer el archivo Excel
+try:
+    df = pd.read_excel(excel_path, sheet_name='historia')
+    
+    #  Convertir la columna de fecha a formato datetime
+    df['corte_mes'] = pd.to_datetime(df['corte_mes'])
+    
+    # 5. Insertar datos en la base de datos
+    df.to_sql('historial_saldos', conn, if_exists='append', index=False, 
+             dtype={'corte_mes': 'DATETIME'})
+    
+    print(f"Datos cargados exitosamente a la base de datos: {db_path}")
+    print(f"Total de registros insertados: {len(df)}")
+    
+except Exception as e:
+    print(f"Error al procesar el archivo Excel: {str(e)}")
+finally:
+    # Cerrar la conexión
+    conn.close()
