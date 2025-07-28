@@ -1,11 +1,10 @@
 -- Parámetros configurables
 WITH params AS (
     SELECT
-        '2024-12-31'::date AS fecha_base, -- Asegúrate de que el tipo de dato sea correcto para tu DB (e.g., DATE, DATETIME)
-        3 AS n_minimo                     -- Mínimo de meses consecutivos requeridos
+        '2024-12-31' AS fecha_base, 
+        3 AS n_minimo               
 ),
 -- 1. Clasificar saldos por nivel y calcular la diferencia de fila para identificar grupos de rachas
--- Esta CTE combina la clasificación y la lógica para detectar el inicio de una nueva racha
 clasificacion_con_grupo AS (
     SELECT
         h.identificacion,
@@ -20,7 +19,7 @@ clasificacion_con_grupo AS (
         END AS nivel,
         -- Calcula la diferencia en meses desde un punto de referencia para cada registro
         -- Si esta diferencia es constante dentro de un grupo de "nivel", significa que es una racha.
-        (DATE_PART('year', h.corte_mes) * 12 + DATE_PART('month', h.corte_mes)) -
+        (CAST(strftime('%Y', h.corte_mes) AS INTEGER) * 12 + CAST(strftime('%m', h.corte_mes) AS INTEGER)) -
         ROW_NUMBER() OVER (PARTITION BY h.identificacion,
             CASE
                 WHEN h.saldo < 300000 THEN 'N0'
