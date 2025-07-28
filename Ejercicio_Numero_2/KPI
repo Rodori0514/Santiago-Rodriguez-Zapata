@@ -1,0 +1,62 @@
+2.# Ejercicio Conceptual de KPI's
+ramework de Calidad de Datos (Data Quality Dashboard)
+Herramienta Conceptual:
+Data Quality Scorecard: Tablero interactivo que muestre KPIs clave:
+Integridad: % de registros completos vs nulos
+Exactitud: % de números válidos (validación por regex)
+Unicidad: % de duplicados identificados
+Consistencia: % de códigos de país que coinciden con prefijos telefónicos
+Actualidad: Fecha de última actualización
+
+def calculate_quality_metrics(df):
+    metrics = {
+        'completeness': (1 - df.isnull().mean().mean()) * 100,
+        'uniqueness': (1 - df.duplicated().mean()) * 100,
+        'valid_phones': df['Numero_Telefono'].str.match(r'^\+?\d{7,}$').mean() * 100
+    }
+    return pd.DataFrame.from_dict(metrics, orient='index', columns=['Value'])
+
+2.1 #creacion de script sql para el kpi
+SELECT 
+    Codigo_pais,
+    COUNT(*) as total_clientes,
+    ROUND(AVG(CASE 
+        WHEN Numero_Telefono GLOB '*[^0-9+]*' THEN 0 
+        WHEN LENGTH(REPLACE(Numero_Telefono, '+', '')) >= 7 THEN 1 
+        ELSE 0 END) * 100, 2) as porcentaje_validos
+FROM clientes
+GROUP BY Codigo_pais;
+
+DIAGRAMA CONCEPTUAL DEL SISTEMA:
+            Data Sources               Data Quality            Business Intelligence
+        ┌─────────────────┐         ┌────────────────┐         ┌──────────────────┐
+        │   Data Sources  │ →       │  Data Quality  │ →       │ Business Intelli. │
+        │ (CSV, APIs, DB) │         │   Engine       │         │      Tools       │
+        └─────────────────┘         └────────────────┘         └──────────────────┘
+                                        ↓
+                                ┌────────────────┐
+                                │  Data Catalog  │
+                                │  (Metadata)    │
+                                └────────────────┘
+
+DEMOSTRACIÓN DEL FLUJO DE DATOS:
+
+1. Datos Originales:
+   Codigo_pais   Numero_Telefono
+0         +57     +573001234567
+1          +1          15551234
+2         +57          INVALIDO
+3         +54     +541112345678
+
+2. Reporte de Calidad:
+            Total  Validos  Porcentaje
+Codigo_pais                          
++1              1        1      100.00
++54             1        1      100.00
++57             2        1       50.00
+
+3. Metadatos:
+                  Valor
+Fecha        2023-11-15
+Filas                 4
+Campos_Validados  Numero_Telefono
