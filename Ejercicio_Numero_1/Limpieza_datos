@@ -1,0 +1,106 @@
+import pandas as pd
+import logging
+from typing import Tuple
+
+# Configuración de logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class DataCleaner:
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+        self.df = self._load_data()
+        
+    def _load_data(self) -> pd.DataFrame:
+        """Carga los datos desde el archivo CSV"""
+        try:
+            df = pd.read_csv(self.filepath)
+            logger.info(f"Datos cargados correctamente. Filas: {len(df)}")
+            return df
+        except Exception as e:
+            logger.error(f"Error al cargar los datos: {str(e)}")
+            raise
+
+    def remove_duplicates(self) -> Tuple[pd.DataFrame, int]:
+        """Elimina registros duplicados"""
+        initial_count = len(self.df)
+        self.df = self.df.drop_duplicates()
+        removed = initial_count - len(self.df)
+        logger.info(f"Registros duplicados eliminados: {removed}")
+        return self.df, removed
+
+    def handle_missing_values(self, strategy: str = 'drop') -> Tuple[pd.DataFrame, int]:
+        """Maneja valores nulos según la estrategia especificada"""
+        null_count = self.df.isnull().sum().sum()
+        
+        if strategy == 'drop':
+            initial_count = len(self.df)
+            self.df = self.df.dropna()
+            removed = initial_count - len(self.df)
+            logger.info(f"Registros con valores nulos eliminados: {removed}")
+        elif strategy == 'fill':
+            # Estrategias específicas por columna
+            fill_values = {
+                'Nombre': 'DESCONOCIDO',
+                'Apellido': 'DESCONOCIDO',
+                'Numero_Telefono': '0000000000',
+                'Codigo_pais': '+57'  # Colombia como default
+            }
+            self.df = self.df.fillna(fill_values)
+            logger.info("Valores nulos rellenados con valores por defecto")
+        
+        return self.df, null_count
+
+    def validate_phone_numbers(self) -> Tuple[pd.DataFrame, int]:
+        """Valida que los números de teléfono tengan formato correcto"""
+        initial_count = len(self.df)
+        # Elimina caracteres no numéricos (excepto +)
+        self.df['Numero_Telefono'] = self.df['Numero_Telefono'].astype(str).str.replace(r'[^0-9+]', '', regex=True)
+        # Filtra números inválidos (menos de 7 dígitos)
+        mask = self.df['Numero_Telefono'].str.len() >= 7
+        invalid_count = len(self.df[~mask])
+        self.df = self.df[mask]
+        logger.info(f"Números de teléfono inválidos eliminados: {invalid_count}")
+        return self.df, invalid_count
+
+    def save_clean_data(self, output_path: str):
+        """Guarda los datos limpios"""
+        self.df.to_csv(output_path, index=False)
+        logger.info(f"Datos limpios guardados en: {output_path}")
+
+def clean_dataset(input_path: str, output_path: str) -> dict:
+    """Función principal para limpieza de datos"""
+    stats = {}
+    try:
+        cleaner = DataCleaner(input_path)
+        
+        # Procesamiento
+        df, dup_count = cleaner.remove_duplicates()
+        stats['duplicates_removed'] = dup_count
+        
+        df, null_count = cleaner.handle_missing_values(strategy='fill')
+        stats['null_values_handled'] = null_count
+        
+        df, invalid_phones = cleaner.validate_phone_numbers()
+        stats['invalid_phones_removed'] = invalid_phones
+        
+        # Guardar resultados
+        cleaner.save_clean_data(output_path)
+        stats['final_rows'] = len(df)
+        stats['status'] = 'success'
+        
+    except Exception as e:
+        logger.error(f"Error en el proceso de limpieza: {str(e)}")
+        stats['status'] = 'error'
+        stats['error_message'] = str(e)
+    
+    return stats
+
+if __name__ == "__main__":
+    # Configuración
+    input_file = 'Dataset_clientes.csv'
+    output_file = 'Dataset_clientes_clean.csv'
+    
+    # Ejecución
+    results = clean_dataset(input_file, output_file)
+    logger.info(f"Resumen de limpieza: {results}")
